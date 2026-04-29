@@ -1,4 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthGate } from "@/lib/auth-gate";
+import { AppLayout } from "@/components/AppLayout";
 
 import appCss from "../styles.css?url";
 
