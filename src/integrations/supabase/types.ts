@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          code: string
+          created_at: string
+          product_name: string
+          quantity: number
+          selling_price_per_unit: number
+          total_purchase_cost: number
+          total_units: number | null
+          units_per_quantity: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          product_name: string
+          quantity: number
+          selling_price_per_unit: number
+          total_purchase_cost: number
+          total_units?: number | null
+          units_per_quantity: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          product_name?: string
+          quantity?: number
+          selling_price_per_unit?: number
+          total_purchase_cost?: number
+          total_units?: number | null
+          units_per_quantity?: number
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          total_amount: number
+          type: Database["public"]["Enums"]["sale_type"]
+          units_sold: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          total_amount?: number
+          type?: Database["public"]["Enums"]["sale_type"]
+          units_sold: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          total_amount?: number
+          type?: Database["public"]["Enums"]["sale_type"]
+          units_sold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          email: string | null
+          id: number
+          low_stock_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          email?: string | null
+          id?: number
+          low_stock_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          email?: string | null
+          id?: number
+          low_stock_threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +111,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      sale_type: "normal" | "donated" | "spoilt"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +238,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      sale_type: ["normal", "donated", "spoilt"],
+    },
   },
 } as const
