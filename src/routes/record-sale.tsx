@@ -19,11 +19,11 @@ export const Route = createFileRoute("/record-sale")({
   component: RecordSale,
 });
 
-const typeLabel = {
+const typeLabel: { [k: string]: { label: string; color: string } } = {
   normal: { label: "Normal Sale", color: "bg-primary text-primary-foreground" },
   donated: { label: "Donated", color: "bg-[oklch(0.72_0.18_160)] text-white" },
   spoilt: { label: "Spoilt", color: "bg-destructive text-destructive-foreground" },
-} satisfies Record<SaleType, { label: string; color: string }>;
+};
 
 function RecordSale() {
   const [input, setInput] = useState("");
