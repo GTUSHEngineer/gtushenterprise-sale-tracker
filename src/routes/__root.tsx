@@ -48,6 +48,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster richColors position="top-center" />
         <Scripts />
       </body>
     </html>
@@ -55,5 +56,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <AuthGate>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+    </AuthGate>
+  );
 }
