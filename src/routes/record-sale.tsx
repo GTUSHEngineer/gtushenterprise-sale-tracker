@@ -154,3 +154,4 @@ function RecordSale() {
     </div>
   );
 }
+
