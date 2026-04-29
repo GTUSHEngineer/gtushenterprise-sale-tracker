@@ -16,7 +16,7 @@ export const Route = createFileRoute("/record-sale")({
       { name: "description", content: "Quickly record a sale by entering the product code." },
     ],
   }),
-  component: RecordSale,
+  component: () => <RecordSale />,
 });
 
 const typeLabel: { [k: string]: { label: string; color: string } } = {
