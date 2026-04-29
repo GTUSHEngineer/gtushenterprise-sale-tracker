@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.process_sale() FROM PUBLIC, anon, authenticated;
