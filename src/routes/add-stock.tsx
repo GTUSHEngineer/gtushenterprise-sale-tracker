@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { addProduct } from "@/lib/data";
+import { addProduct, getNextProductCode, syncFromCloud } from "@/lib/data";
 import { CODE_REGEX, formatKsh } from "@/lib/utils-sales";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
