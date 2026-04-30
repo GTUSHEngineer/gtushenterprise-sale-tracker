@@ -30,7 +30,7 @@ export interface CachedSettings {
 
 export interface OutboxItem {
   id?: number;
-  kind: "add_product" | "add_sale" | "save_settings";
+  kind: "add_product" | "add_sale" | "save_settings" | "update_product" | "delete_product";
   payload: any;
   created_at: string;
 }
