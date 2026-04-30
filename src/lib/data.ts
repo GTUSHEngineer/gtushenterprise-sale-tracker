@@ -109,6 +109,25 @@ export async function getSalesForDate(date: Date): Promise<CachedSale[]> {
   });
 }
 
+// ---------- Code generation ----------
+// Auto-generates the next sequential product code in the form P0001, P0002, ...
+// Uses the highest existing numeric P-code across local cache (always available).
+export async function getNextProductCode(): Promise<string> {
+  let maxNum = 0;
+  if (db) {
+    const all = await db.products.toArray();
+    for (const p of all) {
+      const m = /^P(\d+)$/i.exec(p.code);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > maxNum) maxNum = n;
+      }
+    }
+  }
+  const next = maxNum + 1;
+  return `P${String(next).padStart(4, "0")}`;
+}
+
 // ---------- Writes ----------
 export async function addProduct(input: {
   code: string;

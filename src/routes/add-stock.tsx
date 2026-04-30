@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { addProduct } from "@/lib/data";
+import { addProduct, getNextProductCode, syncFromCloud } from "@/lib/data";
 import { CODE_REGEX, formatKsh } from "@/lib/utils-sales";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
@@ -28,6 +28,18 @@ function AddStock() {
   const [cost, setCost] = useState("");
   const [price, setPrice] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await syncFromCloud();
+      } catch {}
+      const next = await getNextProductCode();
+      if (!cancelled) setCode(next);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const totalUnits = (Number(quantity) || 0) * (Number(unitsPer) || 0);
 
@@ -66,20 +78,19 @@ function AddStock() {
       <Card className="p-5 md:p-6 border-0 shadow-[var(--shadow-card)]">
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label htmlFor="code">Product Code *</Label>
+            <Label htmlFor="code">Product Code</Label>
             <Input
               id="code"
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="e.g. SUGAR1"
-              className="mt-1 uppercase font-mono"
-              autoFocus
+              readOnly
+              placeholder="Generating…"
+              className="mt-1 uppercase font-mono bg-muted cursor-not-allowed"
             />
-            <p className="text-xs text-muted-foreground mt-1">4+ uppercase letters/numbers. Cannot be reused.</p>
+            <p className="text-xs text-muted-foreground mt-1">Auto-generated. Sequential and permanent.</p>
           </div>
           <div>
             <Label htmlFor="name">Product Name *</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brown Sugar 1kg" className="mt-1" />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brown Sugar 1kg" className="mt-1" autoFocus />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
