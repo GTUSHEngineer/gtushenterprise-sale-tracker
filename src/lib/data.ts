@@ -227,3 +227,63 @@ export async function saveSettings(input: { low_stock_threshold: number; email: 
   }
   if (db) await db.settings.put({ id: 1, ...input, updated_at });
 }
+
+export async function updateProduct(
+  code: string,
+  updates: {
+    product_name: string;
+    quantity: number;
+    units_per_quantity: number;
+    total_purchase_cost: number;
+    selling_price_per_unit: number;
+  },
+) {
+  const total_units = updates.quantity * updates.units_per_quantity;
+
+  // Ensure new total_units is not below already-sold units
+  if (db) {
+    const sales = await db.sales.toArray();
+    const sold = sales.filter((s) => s.code === code).reduce((a, b) => a + Number(b.units_sold), 0);
+    if (total_units < sold) {
+      throw new Error(`Cannot reduce total units below ${sold} (already sold)`);
+    }
+  }
+
+  const payload = { ...updates, total_units };
+
+  if (isOnline()) {
+    const { error } = await supabase.from("products").update(payload).eq("code", code);
+    if (error) throw error;
+  } else if (db) {
+    await db.outbox.add({
+      kind: "update_product",
+      payload: { code, ...payload },
+      created_at: new Date().toISOString(),
+    });
+  }
+  if (db) {
+    const existing = await db.products.get(code);
+    if (existing) await db.products.put({ ...existing, ...payload });
+  }
+}
+
+export async function deleteProduct(code: string) {
+  if (isOnline()) {
+    // Sales reference products by code (no FK), but clear them to avoid orphan reports
+    await supabase.from("sales").delete().eq("code", code);
+    const { error } = await supabase.from("products").delete().eq("code", code);
+    if (error) throw error;
+  } else if (db) {
+    await db.outbox.add({
+      kind: "delete_product",
+      payload: { code },
+      created_at: new Date().toISOString(),
+    });
+  }
+  if (db) {
+    await db.products.delete(code);
+    const sales = await db.sales.toArray();
+    const toDelete = sales.filter((s) => s.code === code).map((s) => s.id);
+    if (toDelete.length) await db.sales.bulkDelete(toDelete);
+  }
+}
