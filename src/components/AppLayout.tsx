@@ -92,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom nav (mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around z-20">
-        {nav.slice(0, 5).map((n) => {
+        {nav.map((n) => {
           const active = path === n.to;
           return (
             <Link
