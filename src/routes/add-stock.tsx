@@ -29,6 +29,18 @@ function AddStock() {
   const [price, setPrice] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await syncFromCloud();
+      } catch {}
+      const next = await getNextProductCode();
+      if (!cancelled) setCode(next);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const totalUnits = (Number(quantity) || 0) * (Number(unitsPer) || 0);
 
   const submit = async (e: React.FormEvent) => {
