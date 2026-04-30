@@ -48,6 +48,15 @@ export async function flushOutbox() {
       } else if (item.kind === "save_settings") {
         const { error } = await supabase.from("settings").upsert({ id: 1, ...item.payload });
         if (error) throw error;
+      } else if (item.kind === "update_product") {
+        const { code, ...updates } = item.payload;
+        const { error } = await supabase.from("products").update(updates).eq("code", code);
+        if (error) throw error;
+      } else if (item.kind === "delete_product") {
+        const { code } = item.payload;
+        await supabase.from("sales").delete().eq("code", code);
+        const { error } = await supabase.from("products").delete().eq("code", code);
+        if (error) throw error;
       }
       await db.outbox.delete(item.id!);
     } catch (e) {
