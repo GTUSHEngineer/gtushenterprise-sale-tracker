@@ -117,6 +117,7 @@ function Inventory() {
       setDeleting(null);
       return;
     }
+    setSaving(true);
     try {
       await deleteProduct(deleting.code);
       toast.success(`${deleting.code} deleted`);
