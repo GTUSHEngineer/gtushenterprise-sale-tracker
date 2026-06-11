@@ -112,7 +112,11 @@ function Inventory() {
 
   const confirmDelete = async () => {
     if (!deleting) return;
-    setSaving(true);
+    if (!isAdmin) {
+      toast.error("Only admins can delete products");
+      setDeleting(null);
+      return;
+    }
     try {
       await deleteProduct(deleting.code);
       toast.success(`${deleting.code} deleted`);
