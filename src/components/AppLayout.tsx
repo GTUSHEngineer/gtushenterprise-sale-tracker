@@ -1,15 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff } from "lucide-react";
+import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { flushOutbox, syncFromCloud } from "@/lib/data";
+import { useRole, type Role } from "@/lib/role";
 
-const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/add-stock", label: "Add Stock", icon: PackagePlus },
-  { to: "/record-sale", label: "Record Sale", icon: ShoppingCart },
-  { to: "/inventory", label: "Inventory", icon: Boxes },
-  { to: "/reports", label: "Reports", icon: FileText },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+const allNav = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "employee"] as Role[] },
+  { to: "/add-stock", label: "Add Stock", icon: PackagePlus, roles: ["admin", "employee"] as Role[] },
+  { to: "/record-sale", label: "Record Sale", icon: ShoppingCart, roles: ["admin", "employee"] as Role[] },
+  { to: "/inventory", label: "Inventory", icon: Boxes, roles: ["admin", "employee"] as Role[] },
+  { to: "/reports", label: "Reports", icon: FileText, roles: ["admin"] as Role[] },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin"] as Role[] },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
