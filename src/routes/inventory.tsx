@@ -182,9 +182,11 @@ function Inventory() {
                       <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(p)} aria-label={`Edit ${p.code}`}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleting(p)} aria-label={`Delete ${p.code}`}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      {isAdmin && (
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleting(p)} aria-label={`Delete ${p.code}`}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
