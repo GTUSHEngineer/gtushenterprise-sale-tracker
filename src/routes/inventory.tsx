@@ -32,6 +32,7 @@ import {
   type ProductWithStock,
 } from "@/lib/data";
 import { Search, Package, Pencil, Trash2 } from "lucide-react";
+import { useRole } from "@/lib/role";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
