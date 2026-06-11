@@ -42,19 +42,15 @@ function AddStock() {
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const refreshNextCode = async (extraCount = 0) => {
-    const next = await getNextProductCode();
-    // Bump by number of pending drafts so each draft keeps a unique code
-    const m = /^P(\d+)$/i.exec(next);
-    const base = m ? parseInt(m[1], 10) : 1;
-    const adjusted = `P${String(base + extraCount).padStart(4, "0")}`;
-    setCode(adjusted);
+  const refreshNextCode = async (reserved: string[] = []) => {
+    const next = await getNextProductCode(reserved);
+    setCode(next);
   };
 
   useEffect(() => {
     (async () => {
       try { await syncFromCloud(); } catch {}
-      await refreshNextCode(0);
+      await refreshNextCode();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -80,15 +76,16 @@ function AddStock() {
       total_purchase_cost: Number(cost),
       selling_price_per_unit: Number(price),
     };
-    setDrafts((prev) => [...prev, item]);
+    const nextDrafts = [...drafts, item];
+    setDrafts(nextDrafts);
     resetForm();
-    refreshNextCode(drafts.length + 1);
+    refreshNextCode(nextDrafts.map((d) => d.code));
   };
 
   const removeDraft = (tempId: string) => {
     const next = drafts.filter((d) => d.tempId !== tempId);
     setDrafts(next);
-    refreshNextCode(next.length);
+    refreshNextCode(next.map((d) => d.code));
   };
 
   const saveAll = async () => {
@@ -116,7 +113,7 @@ function AddStock() {
     if (fail === 0) navigate({ to: "/inventory" });
     else {
       setDrafts([]);
-      await refreshNextCode(0);
+      await refreshNextCode();
     }
   };
 
@@ -139,7 +136,7 @@ function AddStock() {
               placeholder="Generating…"
               className="mt-1 uppercase font-mono bg-muted cursor-not-allowed"
             />
-            <p className="text-xs text-muted-foreground mt-1">Auto-generated. Sequential and permanent.</p>
+            <p className="text-xs text-muted-foreground mt-1">Auto-generated using today's date (DDMM/YY). Permanent.</p>
           </div>
           <div>
             <Label htmlFor="name">Product Name *</Label>
