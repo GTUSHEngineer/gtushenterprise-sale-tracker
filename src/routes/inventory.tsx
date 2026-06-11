@@ -45,6 +45,8 @@ export const Route = createFileRoute("/inventory")({
 });
 
 function Inventory() {
+  const role = useRole();
+  const isAdmin = role === "admin";
   const [items, setItems] = useState<ProductWithStock[]>([]);
   const [threshold, setThreshold] = useState(10);
   const [q, setQ] = useState("");
