@@ -121,20 +121,31 @@ export async function getSalesForDate(date: Date): Promise<CachedSale[]> {
 // ---------- Code generation ----------
 // Auto-generates the next sequential product code in the form P0001, P0002, ...
 // Uses the highest existing numeric P-code across local cache (always available).
-export async function getNextProductCode(): Promise<string> {
-  let maxNum = 0;
+export async function getNextProductCode(reservedCodes: string[] = []): Promise<string> {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
+  const base = `${day}${month}/${year}`;
+
+  const allReserved = new Set(reservedCodes);
+
   if (db) {
-    const all = await db.products.toArray();
-    for (const p of all) {
-      const m = /^P(\d+)$/i.exec(p.code);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (n > maxNum) maxNum = n;
-      }
+    const allProducts = await db.products.toArray();
+    for (const p of allProducts) {
+      allReserved.add(p.code);
     }
   }
-  const next = maxNum + 1;
-  return `P${String(next).padStart(4, "0")}`;
+
+  if (!allReserved.has(base)) return base;
+
+  let suffix = 1;
+  while (true) {
+    const candidate = `${base}-${suffix}`;
+    if (!allReserved.has(candidate)) return candidate;
+    suffix++;
+    if (suffix > 999) throw new Error("Too many products for today");
+  }
 }
 
 // ---------- Writes ----------

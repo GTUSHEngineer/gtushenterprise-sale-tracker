@@ -42,13 +42,9 @@ function AddStock() {
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const refreshNextCode = async (extraCount = 0) => {
-    const next = await getNextProductCode();
-    // Bump by number of pending drafts so each draft keeps a unique code
-    const m = /^P(\d+)$/i.exec(next);
-    const base = m ? parseInt(m[1], 10) : 1;
-    const adjusted = `P${String(base + extraCount).padStart(4, "0")}`;
-    setCode(adjusted);
+  const refreshNextCode = async (reserved: string[] = []) => {
+    const next = await getNextProductCode(reserved);
+    setCode(next);
   };
 
   useEffect(() => {

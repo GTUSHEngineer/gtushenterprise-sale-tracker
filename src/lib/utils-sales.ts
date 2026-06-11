@@ -1,6 +1,6 @@
 export type SaleType = "normal" | "donated" | "spoilt";
 
-export const CODE_REGEX = /^[A-Z0-9]{4,}$/;
+export const CODE_REGEX = /^[A-Z0-9\/\-]{4,}$/;
 
 export function parseSaleCode(input: string): { code: string; type: SaleType } | null {
   const raw = input.trim().toUpperCase();
