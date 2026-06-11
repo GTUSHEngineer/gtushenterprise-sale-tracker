@@ -1,19 +1,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff } from "lucide-react";
+import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff, Shield, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { flushOutbox, syncFromCloud } from "@/lib/data";
+import { useRole, type Role } from "@/lib/role";
 
-const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/add-stock", label: "Add Stock", icon: PackagePlus },
-  { to: "/record-sale", label: "Record Sale", icon: ShoppingCart },
-  { to: "/inventory", label: "Inventory", icon: Boxes },
-  { to: "/reports", label: "Reports", icon: FileText },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+const allNav = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "employee"] as Role[] },
+  { to: "/add-stock", label: "Add Stock", icon: PackagePlus, roles: ["admin", "employee"] as Role[] },
+  { to: "/record-sale", label: "Record Sale", icon: ShoppingCart, roles: ["admin", "employee"] as Role[] },
+  { to: "/inventory", label: "Inventory", icon: Boxes, roles: ["admin", "employee"] as Role[] },
+  { to: "/reports", label: "Reports", icon: FileText, roles: ["admin"] as Role[] },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin"] as Role[] },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const role = useRole();
+  const nav = allNav.filter((n) => (role ? n.roles.includes(role) : true));
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
@@ -66,9 +69,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t text-xs text-muted-foreground flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${online ? "bg-[oklch(var(--success))]" : "bg-destructive"}`} style={{ background: online ? "oklch(0.65 0.18 150)" : undefined }} />
-          {online ? "Online — synced" : "Offline mode"}
+        <div className="p-3 border-t text-xs text-muted-foreground space-y-2">
+          {role && (
+            <div className="flex items-center gap-2">
+              {role === "admin" ? <Shield className="h-3.5 w-3.5 text-primary" /> : <User className="h-3.5 w-3.5" />}
+              <span className="font-medium capitalize text-foreground">{role}</span>
+              <button
+                onClick={() => { sessionStorage.removeItem("ssm_unlocked"); sessionStorage.removeItem("ssm_role"); location.reload(); }}
+                className="ml-auto underline hover:text-foreground"
+              >
+                Switch
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: online ? "oklch(0.65 0.18 150)" : "oklch(0.6 0.2 25)" }} />
+            {online ? "Online — synced" : "Offline mode"}
+          </div>
         </div>
       </aside>
 
@@ -80,11 +97,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <span className="font-semibold text-sm">Smart Sales</span>
         </Link>
-        {!online && (
-          <span className="flex items-center gap-1 text-xs text-destructive">
-            <WifiOff className="h-3.5 w-3.5" /> Offline
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {!online && (
+            <span className="flex items-center gap-1 text-xs text-destructive">
+              <WifiOff className="h-3.5 w-3.5" /> Offline
+            </span>
+          )}
+          {role && (
+            <button
+              onClick={() => { sessionStorage.removeItem("ssm_unlocked"); sessionStorage.removeItem("ssm_role"); location.reload(); }}
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-secondary text-foreground"
+              aria-label="Switch user"
+            >
+              {role === "admin" ? <Shield className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+              <span className="capitalize">{role}</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main */}

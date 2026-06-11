@@ -32,6 +32,7 @@ import {
   type ProductWithStock,
 } from "@/lib/data";
 import { Search, Package, Pencil, Trash2 } from "lucide-react";
+import { useRole } from "@/lib/role";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -44,6 +45,8 @@ export const Route = createFileRoute("/inventory")({
 });
 
 function Inventory() {
+  const role = useRole();
+  const isAdmin = role === "admin";
   const [items, setItems] = useState<ProductWithStock[]>([]);
   const [threshold, setThreshold] = useState(10);
   const [q, setQ] = useState("");
@@ -109,6 +112,11 @@ function Inventory() {
 
   const confirmDelete = async () => {
     if (!deleting) return;
+    if (!isAdmin) {
+      toast.error("Only admins can delete products");
+      setDeleting(null);
+      return;
+    }
     setSaving(true);
     try {
       await deleteProduct(deleting.code);
@@ -179,9 +187,11 @@ function Inventory() {
                       <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(p)} aria-label={`Edit ${p.code}`}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleting(p)} aria-label={`Delete ${p.code}`}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      {isAdmin && (
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDeleting(p)} aria-label={`Delete ${p.code}`}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
