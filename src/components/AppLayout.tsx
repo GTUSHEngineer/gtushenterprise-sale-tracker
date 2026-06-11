@@ -15,6 +15,8 @@ const allNav = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const role = useRole();
+  const nav = allNav.filter((n) => (role ? n.roles.includes(role) : true));
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
