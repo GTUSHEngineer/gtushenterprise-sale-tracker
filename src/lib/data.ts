@@ -148,9 +148,7 @@ export async function getNextProductCode(reservedCodes: string[] = []): Promise<
     }
   }
 
-  if (!allReserved.has(base)) return base;
-
-  let suffix = 1;
+  let suffix = 0;
   while (true) {
     const candidate = `${base}-${suffix}`;
     if (!allReserved.has(candidate)) return candidate;
