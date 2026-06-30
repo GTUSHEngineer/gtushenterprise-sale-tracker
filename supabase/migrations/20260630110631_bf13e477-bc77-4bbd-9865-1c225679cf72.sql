@@ -1,0 +1,1 @@
+ALTER TABLE public.products DROP CONSTRAINT products_code_format; ALTER TABLE public.products ADD CONSTRAINT products_code_format CHECK (code ~ '^[A-Z0-9/-]{4,}$');
