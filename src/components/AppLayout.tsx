@@ -9,7 +9,7 @@ const allNav = [
   { to: "/add-stock", label: "Add Stock", icon: PackagePlus, roles: ["admin", "employee"] as Role[] },
   { to: "/record-sale", label: "Record Sale", icon: ShoppingCart, roles: ["admin", "employee"] as Role[] },
   { to: "/inventory", label: "Inventory", icon: Boxes, roles: ["admin", "employee"] as Role[] },
-  { to: "/reports", label: "Reports", icon: FileText, roles: ["admin"] as Role[] },
+  { to: "/reports", label: "Reports", icon: FileText, roles: ["admin", "employee"] as Role[] },
   { to: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin"] as Role[] },
 ];
 
