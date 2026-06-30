@@ -118,6 +118,17 @@ export async function getSalesForDate(date: Date): Promise<CachedSale[]> {
   });
 }
 
+export async function getSalesForMonth(year: number, month: number): Promise<CachedSale[]> {
+  if (!db) return [];
+  const start = new Date(year, month, 1, 0, 0, 0, 0);
+  const end = new Date(year, month + 1, 1, 0, 0, 0, 0);
+  const all = await db.sales.toArray();
+  return all.filter((s) => {
+    const t = new Date(s.created_at);
+    return t >= start && t < end;
+  });
+}
+
 // ---------- Code generation ----------
 // Auto-generates the next sequential product code in the form P0001, P0002, ...
 // Uses the highest existing numeric P-code across local cache (always available).
