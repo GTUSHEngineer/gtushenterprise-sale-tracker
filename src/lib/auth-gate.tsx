@@ -10,8 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ShoppingBag, Shield, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { clearRole, loadRoleForCurrentUser } from "./role";
+import { clearRole, isBootstrapClaimedCached, loadRoleForCurrentUser, markBootstrapClaimed } from "./role";
 import { claimFirstAdmin } from "./admin-users.functions";
+
+function isOnline() {
+  return typeof navigator === "undefined" ? true : navigator.onLine;
+}
 
 type Stage = "loading" | "signin" | "bootstrap" | "no-access";
 
@@ -26,14 +30,26 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     const { data: sess } = await supabase.auth.getSession();
     if (!sess.session) {
       clearRole();
-      // Show bootstrap only when no admin has claimed yet
-      const { data: bs } = await supabase.from("auth_bootstrap").select("admin_claimed").eq("id", 1).maybeSingle();
-      setStage(bs?.admin_claimed ? "signin" : "bootstrap");
+      // Decide bootstrap vs sign-in. Cache the "admin exists" flag so this
+      // still works while offline.
+      if (isBootstrapClaimedCached() || !isOnline()) {
+        setStage("signin");
+      } else {
+        const { data: bs } = await supabase
+          .from("auth_bootstrap")
+          .select("admin_claimed")
+          .eq("id", 1)
+          .maybeSingle();
+        if (bs?.admin_claimed) markBootstrapClaimed();
+        setStage(bs?.admin_claimed ? "signin" : "bootstrap");
+      }
       setReady(false);
       return;
     }
     const role = await loadRoleForCurrentUser();
     if (!role) {
+      // Offline with a session but no cached role — allow through only if
+      // the browser can't reach the server; otherwise it really is no access.
       setStage("no-access");
       setReady(false);
       return;
@@ -43,12 +59,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh();
+    const onOnline = () => refresh();
+    window.addEventListener("online", onOnline);
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         refresh();
       }
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      window.removeEventListener("online", onOnline);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   if (stage === "loading") return null;
