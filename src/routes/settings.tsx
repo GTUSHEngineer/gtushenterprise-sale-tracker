@@ -6,22 +6,34 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getSettings, saveSettings, syncFromCloud } from "@/lib/data";
 import { toast } from "sonner";
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogOut, RefreshCw, UserPlus, Trash2, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { clearRole, useRole } from "@/lib/role";
+import { createEmployee, deleteEmployee, listEmployees } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Smart Sales Manager" },
-      { name: "description", content: "Configure low-stock threshold and report email address." },
+      { name: "description", content: "Configure low-stock threshold, report email, and employee accounts." },
     ],
   }),
   component: Settings,
 });
 
+type Employee = { id: string; email: string | null; created_at: string };
+
 function Settings() {
+  const role = useRole();
   const [threshold, setThreshold] = useState("10");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmps, setLoadingEmps] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -29,6 +41,25 @@ function Settings() {
       setEmail(s.email || "");
     });
   }, []);
+
+  const getToken = async () => (await supabase.auth.getSession()).data.session?.access_token ?? "";
+
+  const loadEmps = async () => {
+    setLoadingEmps(true);
+    try {
+      const token = await getToken();
+      const list = await listEmployees({ data: { accessToken: token } });
+      setEmployees(list);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to load employees");
+    } finally {
+      setLoadingEmps(false);
+    }
+  };
+
+  useEffect(() => {
+    if (role === "admin") loadEmps();
+  }, [role]);
 
   const save = async () => {
     const t = Number(threshold);
@@ -45,14 +76,44 @@ function Settings() {
     }
   };
 
-  const lockApp = () => {
-    sessionStorage.removeItem("ssm_unlocked");
-    location.reload();
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    clearRole();
   };
 
   const resync = async () => {
     await syncFromCloud();
     toast.success("Synced from cloud");
+  };
+
+  const addEmployee = async () => {
+    if (!/^\S+@\S+\.\S+$/.test(newEmail)) return toast.error("Invalid email");
+    if (newPassword.length < 8) return toast.error("Password must be at least 8 characters");
+    setCreating(true);
+    try {
+      const token = await getToken();
+      await createEmployee({ data: { accessToken: token, email: newEmail.trim(), password: newPassword } });
+      toast.success("Employee created");
+      setNewEmail("");
+      setNewPassword("");
+      loadEmps();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create employee");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const removeEmployee = async (id: string, email: string | null) => {
+    if (!confirm(`Delete ${email ?? "this employee"}? This cannot be undone.`)) return;
+    try {
+      const token = await getToken();
+      await deleteEmployee({ data: { accessToken: token, userId: id } });
+      toast.success("Employee deleted");
+      loadEmps();
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    }
   };
 
   return (
@@ -92,6 +153,47 @@ function Settings() {
         </Button>
       </Card>
 
+      {role === "admin" && (
+        <Card className="p-5 md:p-6 border-0 shadow-[var(--shadow-card)] space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold">Employee Accounts</h2>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ne">New employee email</Label>
+            <Input id="ne" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="employee@example.com" />
+            <Label htmlFor="np">Temporary password</Label>
+            <Input id="np" type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" />
+            <Button onClick={addEmployee} disabled={creating} className="w-full gap-2">
+              <UserPlus className="h-4 w-4" /> {creating ? "Creating…" : "Create Employee"}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">
+              {loadingEmps ? "Loading…" : `${employees.length} employee${employees.length === 1 ? "" : "s"}`}
+            </div>
+            <div className="divide-y rounded-md border">
+              {employees.length === 0 && !loadingEmps && (
+                <div className="p-3 text-sm text-muted-foreground">No employees yet.</div>
+              )}
+              {employees.map((e) => (
+                <div key={e.id} className="flex items-center justify-between p-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{e.email ?? "(no email)"}</div>
+                    <div className="text-xs text-muted-foreground">Added {new Date(e.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => removeEmployee(e.id, e.email)} aria-label="Delete employee">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-5 border-0 shadow-[var(--shadow-card)] space-y-3">
         <h2 className="font-semibold">Data</h2>
         <Button variant="outline" onClick={resync} className="w-full gap-2">
@@ -100,8 +202,8 @@ function Settings() {
       </Card>
 
       <Card className="p-5 border-0 shadow-[var(--shadow-card)]">
-        <Button variant="outline" onClick={lockApp} className="w-full gap-2">
-          <LogOut className="h-4 w-4" /> Lock App
+        <Button variant="outline" onClick={signOut} className="w-full gap-2">
+          <LogOut className="h-4 w-4" /> Sign out
         </Button>
       </Card>
     </div>

@@ -1,8 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff, Shield, User } from "lucide-react";
+import { LayoutDashboard, PackagePlus, ShoppingCart, Boxes, FileText, Settings as SettingsIcon, ShoppingBag, WifiOff, Shield, User, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { flushOutbox, syncFromCloud } from "@/lib/data";
-import { useRole, type Role } from "@/lib/role";
+import { useRole, clearRole, type Role } from "@/lib/role";
+import { supabase } from "@/integrations/supabase/client";
+
+async function signOutApp() {
+  await supabase.auth.signOut();
+  clearRole();
+}
 
 const allNav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "employee"] as Role[] },
@@ -75,10 +81,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               {role === "admin" ? <Shield className="h-3.5 w-3.5 text-primary" /> : <User className="h-3.5 w-3.5" />}
               <span className="font-medium capitalize text-foreground">{role}</span>
               <button
-                onClick={() => { sessionStorage.removeItem("ssm_unlocked"); sessionStorage.removeItem("ssm_role"); location.reload(); }}
-                className="ml-auto underline hover:text-foreground"
+                onClick={signOutApp}
+                className="ml-auto inline-flex items-center gap-1 underline hover:text-foreground"
               >
-                Switch
+                <LogOut className="h-3 w-3" /> Sign out
               </button>
             </div>
           )}
@@ -105,12 +111,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           )}
           {role && (
             <button
-              onClick={() => { sessionStorage.removeItem("ssm_unlocked"); sessionStorage.removeItem("ssm_role"); location.reload(); }}
+              onClick={signOutApp}
               className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-secondary text-foreground"
-              aria-label="Switch user"
+              aria-label="Sign out"
             >
               {role === "admin" ? <Shield className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
               <span className="capitalize">{role}</span>
+              <LogOut className="h-3 w-3 ml-1" />
             </button>
           )}
         </div>
