@@ -256,6 +256,67 @@ function Settings() {
         </Card>
       )}
 
+      <Card className="p-5 md:p-6 border-0 shadow-[var(--shadow-card)] space-y-4">
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-primary" />
+          <h2 className="font-semibold">Change Email & Password</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Signed in as <span className="font-medium">{currentUserEmail || "…"}</span>. Enter your
+          current password to confirm any change.
+        </p>
+
+        <div className="space-y-2">
+          <Label htmlFor="acc-email">Account email</Label>
+          <Input
+            id="acc-email"
+            type="email"
+            autoComplete="email"
+            value={newAccountEmail}
+            onChange={(e) => setNewAccountEmail(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="cur-pass">Current password</Label>
+          <Input
+            id="cur-pass"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Required to confirm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="new-pass">New password</Label>
+          <Input
+            id="new-pass"
+            type="password"
+            autoComplete="new-password"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            placeholder="Leave blank to keep current"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="conf-pass">Confirm new password</Label>
+          <Input
+            id="conf-pass"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
+          />
+        </div>
+
+        <Button onClick={updateCredentials} disabled={updatingCreds} className="w-full gap-2">
+          <KeyRound className="h-4 w-4" /> {updatingCreds ? "Updating…" : "Update credentials"}
+        </Button>
+      </Card>
+
       <Card className="p-5 border-0 shadow-[var(--shadow-card)] space-y-3">
         <h2 className="font-semibold">Data</h2>
         <Button variant="outline" onClick={resync} className="w-full gap-2">
