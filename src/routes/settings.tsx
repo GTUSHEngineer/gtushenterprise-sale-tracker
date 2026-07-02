@@ -35,6 +35,68 @@ function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [newAccountEmail, setNewAccountEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [updatingCreds, setUpdatingCreds] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const e = data.user?.email ?? "";
+      setCurrentUserEmail(e);
+      setNewAccountEmail(e);
+    });
+  }, []);
+
+  const updateCredentials = async () => {
+    if (!newAccountEmail || !/^\S+@\S+\.\S+$/.test(newAccountEmail)) {
+      return toast.error("Invalid email");
+    }
+    const wantsPasswordChange = newPass.length > 0 || confirmPass.length > 0;
+    if (wantsPasswordChange) {
+      if (newPass.length < 8) return toast.error("New password must be at least 8 characters");
+      if (newPass !== confirmPass) return toast.error("Passwords do not match");
+    }
+    const emailChanged = newAccountEmail.trim() !== currentUserEmail;
+    if (!emailChanged && !wantsPasswordChange) {
+      return toast.error("Nothing to update");
+    }
+    if (!currentPassword) return toast.error("Enter your current password to confirm");
+
+    setUpdatingCreds(true);
+    try {
+      // Re-authenticate to confirm identity
+      const { error: reauthErr } = await supabase.auth.signInWithPassword({
+        email: currentUserEmail,
+        password: currentPassword,
+      });
+      if (reauthErr) throw new Error("Current password is incorrect");
+
+      const updates: { email?: string; password?: string } = {};
+      if (emailChanged) updates.email = newAccountEmail.trim();
+      if (wantsPasswordChange) updates.password = newPass;
+
+      const { error } = await supabase.auth.updateUser(updates);
+      if (error) throw error;
+
+      toast.success(
+        emailChanged
+          ? "Updated. Check your new email to confirm the change."
+          : "Password updated",
+      );
+      setCurrentPassword("");
+      setNewPass("");
+      setConfirmPass("");
+      if (emailChanged) setCurrentUserEmail(newAccountEmail.trim());
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update credentials");
+    } finally {
+      setUpdatingCreds(false);
+    }
+  };
+
   useEffect(() => {
     getSettings().then((s) => {
       setThreshold(String(s.low_stock_threshold));
