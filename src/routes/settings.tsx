@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getSettings, saveSettings, syncFromCloud } from "@/lib/data";
 import { toast } from "sonner";
-import { LogOut, RefreshCw, UserPlus, Trash2, Users } from "lucide-react";
+import { LogOut, RefreshCw, UserPlus, Trash2, Users, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearRole, useRole } from "@/lib/role";
 import { createEmployee, deleteEmployee, listEmployees } from "@/lib/admin-users.functions";
