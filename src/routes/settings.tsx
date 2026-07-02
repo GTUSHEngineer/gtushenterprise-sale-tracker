@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getSettings, saveSettings, syncFromCloud } from "@/lib/data";
 import { toast } from "sonner";
-import { LogOut, RefreshCw, UserPlus, Trash2, Users } from "lucide-react";
+import { LogOut, RefreshCw, UserPlus, Trash2, Users, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearRole, useRole } from "@/lib/role";
 import { createEmployee, deleteEmployee, listEmployees } from "@/lib/admin-users.functions";
@@ -34,6 +34,68 @@ function Settings() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [newAccountEmail, setNewAccountEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [updatingCreds, setUpdatingCreds] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const e = data.user?.email ?? "";
+      setCurrentUserEmail(e);
+      setNewAccountEmail(e);
+    });
+  }, []);
+
+  const updateCredentials = async () => {
+    if (!newAccountEmail || !/^\S+@\S+\.\S+$/.test(newAccountEmail)) {
+      return toast.error("Invalid email");
+    }
+    const wantsPasswordChange = newPass.length > 0 || confirmPass.length > 0;
+    if (wantsPasswordChange) {
+      if (newPass.length < 8) return toast.error("New password must be at least 8 characters");
+      if (newPass !== confirmPass) return toast.error("Passwords do not match");
+    }
+    const emailChanged = newAccountEmail.trim() !== currentUserEmail;
+    if (!emailChanged && !wantsPasswordChange) {
+      return toast.error("Nothing to update");
+    }
+    if (!currentPassword) return toast.error("Enter your current password to confirm");
+
+    setUpdatingCreds(true);
+    try {
+      // Re-authenticate to confirm identity
+      const { error: reauthErr } = await supabase.auth.signInWithPassword({
+        email: currentUserEmail,
+        password: currentPassword,
+      });
+      if (reauthErr) throw new Error("Current password is incorrect");
+
+      const updates: { email?: string; password?: string } = {};
+      if (emailChanged) updates.email = newAccountEmail.trim();
+      if (wantsPasswordChange) updates.password = newPass;
+
+      const { error } = await supabase.auth.updateUser(updates);
+      if (error) throw error;
+
+      toast.success(
+        emailChanged
+          ? "Updated. Check your new email to confirm the change."
+          : "Password updated",
+      );
+      setCurrentPassword("");
+      setNewPass("");
+      setConfirmPass("");
+      if (emailChanged) setCurrentUserEmail(newAccountEmail.trim());
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update credentials");
+    } finally {
+      setUpdatingCreds(false);
+    }
+  };
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -193,6 +255,67 @@ function Settings() {
           </div>
         </Card>
       )}
+
+      <Card className="p-5 md:p-6 border-0 shadow-[var(--shadow-card)] space-y-4">
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-primary" />
+          <h2 className="font-semibold">Change Email & Password</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Signed in as <span className="font-medium">{currentUserEmail || "…"}</span>. Enter your
+          current password to confirm any change.
+        </p>
+
+        <div className="space-y-2">
+          <Label htmlFor="acc-email">Account email</Label>
+          <Input
+            id="acc-email"
+            type="email"
+            autoComplete="email"
+            value={newAccountEmail}
+            onChange={(e) => setNewAccountEmail(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="cur-pass">Current password</Label>
+          <Input
+            id="cur-pass"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Required to confirm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="new-pass">New password</Label>
+          <Input
+            id="new-pass"
+            type="password"
+            autoComplete="new-password"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            placeholder="Leave blank to keep current"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="conf-pass">Confirm new password</Label>
+          <Input
+            id="conf-pass"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
+          />
+        </div>
+
+        <Button onClick={updateCredentials} disabled={updatingCreds} className="w-full gap-2">
+          <KeyRound className="h-4 w-4" /> {updatingCreds ? "Updating…" : "Update credentials"}
+        </Button>
+      </Card>
 
       <Card className="p-5 border-0 shadow-[var(--shadow-card)] space-y-3">
         <h2 className="font-semibold">Data</h2>
