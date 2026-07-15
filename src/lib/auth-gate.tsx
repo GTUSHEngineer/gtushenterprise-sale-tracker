@@ -72,8 +72,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  if (stage === "loading") return null;
   if (ready) return <>{children}</>;
+  if (stage === "loading") return null;
 
   const signIn = async () => {
     if (!email || !password) return toast.error("Enter email and password");
