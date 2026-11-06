@@ -1,5 +1,9 @@
 export type SaleType = "normal" | "donated" | "spoilt";
 
+export function calculateSaleTotal(units: number, unitPrice: number, type: SaleType): number {
+  return type === "normal" ? units * unitPrice : 0;
+}
+
 export const CODE_REGEX = /^[A-Z0-9\/\-]{4,}$/;
 
 export function parseSaleCode(input: string): { code: string; type: SaleType } | null {

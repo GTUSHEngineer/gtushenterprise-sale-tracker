@@ -203,23 +203,39 @@ export async function addProduct(input: {
   if (db) await db.products.put(row);
 }
 
-export async function addSale(input: { code: string; units_sold: number; type: SaleType }) {
+export async function addSale(input: {
+  code: string;
+  units_sold: number;
+  type: SaleType;
+  unit_price: number;
+}) {
   const product = await getProductWithStock(input.code);
   if (!product) throw new Error(`Unknown product: ${input.code}`);
   if (product.remaining_units <= 0) throw new Error(`${input.code} is out of stock`);
   if (input.units_sold > product.remaining_units)
     throw new Error(`Only ${product.remaining_units} units remaining`);
+  if (!Number.isFinite(input.unit_price) || input.unit_price < 0)
+    throw new Error("Selling price must be a valid amount of 0 or more");
 
-  const total_amount = input.type === "normal" ? input.units_sold * product.selling_price_per_unit : 0;
+  const total_amount = input.type === "normal" ? input.units_sold * input.unit_price : 0;
   const id = crypto.randomUUID();
   const created_at = new Date().toISOString();
-  const row: CachedSale = { id, code: input.code, units_sold: input.units_sold, type: input.type, total_amount, created_at };
+  const row: CachedSale = {
+    id,
+    code: input.code,
+    units_sold: input.units_sold,
+    type: input.type,
+    unit_price: input.unit_price,
+    total_amount,
+    created_at,
+  };
 
   if (isOnline()) {
     const { error } = await supabase.from("sales").insert({
       code: input.code,
       units_sold: input.units_sold,
       type: input.type,
+      unit_price: input.unit_price,
     });
     if (error) throw error;
     // Re-sync sales so we get the server-generated id and exact total_amount
@@ -228,7 +244,12 @@ export async function addSale(input: { code: string; units_sold: number; type: S
   } else if (db) {
     await db.outbox.add({
       kind: "add_sale",
-      payload: { code: input.code, units_sold: input.units_sold, type: input.type },
+      payload: {
+        code: input.code,
+        units_sold: input.units_sold,
+        type: input.type,
+        unit_price: input.unit_price,
+      },
       created_at,
     });
   }

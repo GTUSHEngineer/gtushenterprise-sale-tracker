@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { addSale, getProducts, type ProductWithStock } from "@/lib/data";
-import { formatKsh, type SaleType } from "@/lib/utils-sales";
+import { calculateSaleTotal, formatKsh, type SaleType } from "@/lib/utils-sales";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
 
@@ -43,6 +43,7 @@ function RecordSale() {
   const [highlight, setHighlight] = useState(0);
   const [selected, setSelected] = useState<ProductWithStock | null>(null);
   const [units, setUnits] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
   const [type, setType] = useState<SaleType>("normal");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -85,6 +86,7 @@ function RecordSale() {
   const pick = (p: ProductWithStock) => {
     setSelected(p);
     setQuery(p.product_name);
+    setUnitPrice(String(p.selling_price_per_unit));
     setShowSuggestions(false);
   };
 
@@ -108,9 +110,11 @@ function RecordSale() {
     if (!selected) return toast.error("Please select a product");
     const u = Number(units);
     if (!u || u <= 0) return toast.error("Units must be > 0");
+    const price = Number(unitPrice);
+    if (!Number.isFinite(price) || price < 0) return toast.error("Enter a valid selling price");
     const remaining = remainingFor(selected.code, selected.remaining_units);
     if (u > remaining) return toast.error(`Only ${remaining} units remaining`);
-    const line_total = type === "normal" ? u * selected.selling_price_per_unit : 0;
+    const line_total = calculateSaleTotal(u, price, type);
     setCart((c) => [
       ...c,
       {
@@ -119,13 +123,14 @@ function RecordSale() {
         product_name: selected.product_name,
         units: u,
         type,
-        price_per_unit: selected.selling_price_per_unit,
+        price_per_unit: price,
         line_total,
       },
     ]);
     // reset entry row
     setQuery("");
     setUnits("");
+    setUnitPrice("");
     setSelected(null);
     setType("normal");
   };
@@ -142,7 +147,12 @@ function RecordSale() {
     let failed: string[] = [];
     for (const item of cart) {
       try {
-        await addSale({ code: item.code, units_sold: item.units, type: item.type });
+        await addSale({
+          code: item.code,
+          units_sold: item.units,
+          type: item.type,
+          unit_price: item.price_per_unit,
+        });
         ok++;
       } catch (err: any) {
         failed.push(`${item.code}: ${err.message}`);
@@ -157,8 +167,8 @@ function RecordSale() {
   };
 
   const previewLineTotal =
-    selected && type === "normal" && Number(units || 0) > 0
-      ? Number(units) * selected.selling_price_per_unit
+    selected && Number(units || 0) > 0 && Number(unitPrice || 0) >= 0
+      ? calculateSaleTotal(Number(units), Number(unitPrice), type)
       : 0;
 
   return (
@@ -229,7 +239,7 @@ function RecordSale() {
           <div className="rounded-lg border p-3 bg-secondary/40 flex items-center justify-between text-sm">
             <div className="font-medium truncate">{selected.product_name}</div>
             <div className="text-muted-foreground">
-              {formatKsh(selected.selling_price_per_unit)}/u • {remainingFor(selected.code, selected.remaining_units)} left
+              {remainingFor(selected.code, selected.remaining_units)} left
             </div>
           </div>
         )}
@@ -252,7 +262,7 @@ function RecordSale() {
           </div>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <div>
             <Label htmlFor="units">Units</Label>
             <Input
@@ -262,6 +272,21 @@ function RecordSale() {
               value={units}
               onChange={(e) => setUnits(e.target.value)}
               placeholder="1"
+              className="mt-1 text-lg"
+              disabled={!selected}
+            />
+          </div>
+          <div>
+            <Label htmlFor="unit-price">Selling price per unit (Ksh)</Label>
+            <Input
+              id="unit-price"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              placeholder="0"
               className="mt-1 text-lg"
               disabled={!selected}
             />
