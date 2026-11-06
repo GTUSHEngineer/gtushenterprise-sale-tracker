@@ -15,6 +15,10 @@ export const Route = createFileRoute("/record-sale")({
     meta: [
       { title: "Record Sale — Smart Sales Manager" },
       { name: "description", content: "Add multiple items and record the sale at once." },
+      { property: "og:title", content: "Record Sale — Smart Sales Manager" },
+      { property: "og:description", content: "Add sale items with individual selling prices and review the total before recording." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: RecordSale,
@@ -316,7 +320,8 @@ function RecordSale() {
         ) : (
           <ul className="divide-y">
             {cart.map((item) => {
-              const typeMeta = typeOptions.find((t) => t.value === item.type)!;
+              const typeMeta = typeOptions.find((t) => t.value === item.type);
+              if (!typeMeta) return null;
               return (
                 <li key={item.id} className="py-3 flex items-center gap-3">
                   <div className="min-w-0 flex-1">

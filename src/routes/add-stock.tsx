@@ -16,6 +16,10 @@ export const Route = createFileRoute("/add-stock")({
     meta: [
       { title: "Add Stock — Smart Sales Manager" },
       { name: "description", content: "Register one or more product batches with auto codes." },
+      { property: "og:title", content: "Add Stock — Smart Sales Manager" },
+      { property: "og:description", content: "Register one or more product batches with auto codes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AddStock,

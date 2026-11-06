@@ -11,6 +11,10 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Dashboard — Smart Sales Manager" },
       { name: "description", content: "Today's sales, units sold, and low-stock alerts at a glance." },
+      { property: "og:title", content: "Dashboard — Smart Sales Manager" },
+      { property: "og:description", content: "Today's sales, units sold, and low-stock alerts at a glance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Dashboard,

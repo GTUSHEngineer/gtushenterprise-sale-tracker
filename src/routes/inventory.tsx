@@ -39,6 +39,10 @@ export const Route = createFileRoute("/inventory")({
     meta: [
       { title: "Inventory — Smart Sales Manager" },
       { name: "description", content: "Browse, edit and remove stock batches with stock alerts." },
+      { property: "og:title", content: "Inventory — Smart Sales Manager" },
+      { property: "og:description", content: "Browse, edit and remove stock batches with stock alerts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Inventory,
