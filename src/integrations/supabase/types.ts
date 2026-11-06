@@ -72,6 +72,7 @@ export type Database = {
           id: string
           total_amount: number
           type: Database["public"]["Enums"]["sale_type"]
+          unit_price: number | null
           units_sold: number
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           id?: string
           total_amount?: number
           type?: Database["public"]["Enums"]["sale_type"]
+          unit_price?: number | null
           units_sold: number
         }
         Update: {
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           total_amount?: number
           type?: Database["public"]["Enums"]["sale_type"]
+          unit_price?: number | null
           units_sold?: number
         }
         Relationships: [
