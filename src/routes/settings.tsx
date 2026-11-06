@@ -16,6 +16,10 @@ export const Route = createFileRoute("/settings")({
     meta: [
       { title: "Settings — Smart Sales Manager" },
       { name: "description", content: "Configure low-stock threshold, report email, and employee accounts." },
+      { property: "og:title", content: "Settings — Smart Sales Manager" },
+      { property: "og:description", content: "Configure low-stock threshold, report email, and employee accounts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Settings,

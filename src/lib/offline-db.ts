@@ -17,6 +17,7 @@ export interface CachedSale {
   code: string;
   units_sold: number;
   type: "normal" | "donated" | "spoilt";
+  unit_price?: number | null;
   total_amount: number;
   created_at: string;
 }

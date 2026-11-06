@@ -18,6 +18,10 @@ export const Route = createFileRoute("/reports")({
     meta: [
       { title: "Reports — Smart Sales Manager" },
       { name: "description", content: "Download daily and monthly PDF sales reports." },
+      { property: "og:title", content: "Reports — Smart Sales Manager" },
+      { property: "og:description", content: "Download daily and monthly PDF sales reports." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Reports,
